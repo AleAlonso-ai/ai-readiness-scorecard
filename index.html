@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMB AI Readiness Scorecard</title>
+  <meta name="description" content="A free 5-minute assessment that shows a small business where it stands on AI and what to do first.">
+
+  <!-- ============================================================
+       STYLES — colors, layout, and how everything looks.
+       Colors are defined once as "variables" at the top so you can
+       rebrand the whole page by changing a few lines.
+       ============================================================ -->
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --card: #ffffff;
+      --text: #1d2330;
+      --muted: #5d6576;
+      --border: #e3e5ea;
+      --accent: #2f5bea;       /* main brand color */
+      --accent-soft: #e8eeff;
+      --good: #1f9d6b;
+      --mid: #d99a1e;
+      --low: #d4513b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #12151c;
+        --card: #1b1f29;
+        --text: #eef0f4;
+        --muted: #a2a9b8;
+        --border: #2c3240;
+        --accent: #7c9bff;
+        --accent-soft: #232c47;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+    }
+    h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 12px; }
+    h2 { font-size: 1.35rem; margin: 0 0 4px; }
+    h3 { font-size: 1.05rem; margin: 0 0 4px; }
+    p  { margin: 0 0 14px; }
+    .muted { color: var(--muted); }
+    .eyebrow {
+      text-transform: uppercase; letter-spacing: .08em;
+      font-size: .75rem; font-weight: 600; color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .hidden { display: none; }
+
+    /* Buttons */
+    button {
+      font: inherit; cursor: pointer; border-radius: 10px;
+      padding: 12px 22px; border: 1px solid transparent; font-weight: 600;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+    .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; }
+
+    /* Intro list */
+    .areas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 18px 0 24px; padding: 0; list-style: none; }
+    .areas li { background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: .95rem; }
+
+    /* Progress bar */
+    .progress { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 20px; }
+    .progress > div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+
+    /* Questions */
+    .question { margin-top: 22px; }
+    .question legend { font-weight: 600; margin-bottom: 10px; padding: 0; }
+    fieldset { border: 0; margin: 0; padding: 0; }
+    .option {
+      display: flex; gap: 10px; align-items: flex-start;
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 14px; margin-bottom: 8px; cursor: pointer;
+    }
+    .option:hover { border-color: var(--accent); }
+    .option input { margin-top: 5px; accent-color: var(--accent); }
+    .option.selected { border-color: var(--accent); background: var(--accent-soft); }
+
+    /* Results */
+    .score-head { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+    .ring { width: 140px; height: 140px; flex-shrink: 0; }
+    .ring text { fill: var(--text); font-weight: 700; }
+    /* Spider (radar) chart */
+    #radar { display: block; width: 100%; max-width: 440px; margin: 8px auto 0; }
+    #radar .grid { fill: none; stroke: var(--border); stroke-width: 1; }
+    #radar .axis { stroke: var(--border); stroke-width: 1; }
+    #radar .ring-label { fill: var(--muted); font-size: 10px; }
+    #radar .shape { fill: var(--accent); fill-opacity: .18; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+    #radar .label { fill: var(--text); font-size: 14px; }
+    #radar .value { font-size: 15px; font-weight: 700; }
+    .step { border-left: 4px solid var(--accent); padding: 4px 0 4px 16px; margin: 18px 0; }
+    .section { margin-top: 32px; }
+    footer { text-align: center; margin-top: 28px; font-size: .85rem; color: var(--muted); }
+    footer a { color: var(--accent); }
+
+    @media print {
+      .nav, footer, .no-print { display: none !important; }
+      body { background: #fff; }
+      .card { border: 0; }
+    }
+  </style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- SCREEN 1: Intro -->
+  <section id="intro" class="card">
+    <div class="eyebrow">Free · 5 minutes · No sign-up</div>
+    <h1>How ready is your business for AI?</h1>
+    <p class="muted">Answer 18 quick questions across six areas. You'll get a readiness score, a breakdown by area, and the three steps that will make the biggest difference first.</p>
+    <ul class="areas" id="area-list"></ul>
+    <button class="btn-primary" onclick="startQuiz()">Start the assessment</button>
+  </section>
+
+  <!-- SCREEN 2: Questions (one area per page) -->
+  <section id="quiz" class="card hidden">
+    <div class="progress"><div id="progress-fill"></div></div>
+    <div class="eyebrow" id="step-label"></div>
+    <h2 id="area-title"></h2>
+    <p class="muted" id="area-desc"></p>
+    <div id="questions"></div>
+    <div class="nav">
+      <button class="btn-ghost" onclick="prevStep()">Back</button>
+      <button class="btn-primary" id="next-btn" onclick="nextStep()" disabled>Next</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: Results -->
+  <section id="results" class="card hidden">
+    <div class="score-head">
+      <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="12"/>
+        <circle id="ring-fill" cx="60" cy="60" r="52" fill="none" stroke="var(--accent)" stroke-width="12"
+                stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"
+                transform="rotate(-90 60 60)" style="transition: stroke-dashoffset 1s"/>
+        <text id="ring-text" x="60" y="68" text-anchor="middle" font-size="28">0</text>
+      </svg>
+      <div>
+        <div class="eyebrow">Your AI readiness</div>
+        <h1 id="level-name"></h1>
+        <p class="muted" id="level-desc"></p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Score by area</h2>
+      <svg id="radar" viewBox="-200 -165 400 335" role="img" aria-label="Spider chart of scores by area"></svg>
+    </div>
+
+    <div class="section">
+      <h2>Your top 3 next steps</h2>
+      <p class="muted">Based on your lowest-scoring areas, which is where a small effort pays off most.</p>
+      <div id="steps"></div>
+    </div>
+
+    <div class="nav no-print">
+      <button class="btn-ghost" onclick="restart()">Retake</button>
+      <button class="btn-primary" onclick="window.print()">Save as PDF</button>
+    </div>
+  </section>
+
+  <footer>
+    Built by <a href="https://github.com/AleAlonso-ai">Alessandra Alonso</a> · TouchOne AI ·
+    Your answers stay in your browser and are never sent anywhere.
+  </footer>
+</main>
+
+<!-- ============================================================
+     CONTENT — the questions and recommendations.
+     To change the assessment, edit this section only.
+     Each answer is worth 0, 1, 2 or 3 points (listed in order).
+     ============================================================ -->
+<script>
+const AREAS = [
+  {
+    id: "strategy",
+    name: "Strategy & Leadership",
+    desc: "Does the business know what it wants from AI?",
+    questions: [
+      { q: "Does leadership have a view of where AI could help the business?",
+        options: ["Not really", "Some loose ideas", "A short list of priorities", "A written plan with owners"] },
+      { q: "Have you set aside budget or time for AI in the next 12 months?",
+        options: ["No", "Maybe, if something looks good", "A small amount", "Yes, a defined budget and time"] },
+      { q: "Can you name a specific business problem you'd want AI to solve?",
+        options: ["No", "Something vague, like \"save time\"", "One clear problem", "Several, with a sense of what each is worth"] }
+    ],
+    steps: {
+      low:  "Pick one problem worth solving. List the three tasks that cost your team the most time each week and choose one to try AI on in the next 30 days.",
+      high: "Turn ideas into a 90-day AI plan: one owner, a small budget, and one number to track (hours saved, response time, or revenue)."
+    }
+  },
+  {
+    id: "data",
+    name: "Data & Information",
+    desc: "AI is only as useful as the information you can give it.",
+    questions: [
+      { q: "Where does your key business information live?",
+        options: ["On paper or in people's heads", "Scattered across spreadsheets and email", "In a few cloud systems (CRM, accounting)", "In cloud systems that are connected to each other"] },
+      { q: "How quickly can you get an up-to-date customer list or sales report?",
+        options: ["It would take days", "A few hours of digging", "Within an hour", "A few clicks, anytime"] },
+      { q: "Do you track key numbers regularly (sales, costs, customer satisfaction)?",
+        options: ["No", "Occasionally", "Monthly", "Weekly or on a live dashboard"] }
+    ],
+    steps: {
+      low:  "Move key information out of paper and inboxes into one shared place, such as a cloud drive or a simple CRM. This is the foundation every AI tool builds on.",
+      high: "Connect your main systems so reports are one click away. That turns AI from a writing helper into an analysis and automation tool."
+    }
+  },
+  {
+    id: "process",
+    name: "Processes",
+    desc: "Clear, repeatable work is the easiest work to improve with AI.",
+    questions: [
+      { q: "Have you identified which repetitive tasks take up the most time?",
+        options: ["No", "We have a feeling", "We know the main ones", "We've measured them"] },
+      { q: "Are core workflows (quoting, onboarding, invoicing) written down step by step?",
+        options: ["None are", "One or two", "Most of them", "All, and kept up to date"] },
+      { q: "Do you have templates, FAQs or standard replies the team reuses?",
+        options: ["No", "A few, here and there", "Yes, for common situations", "Yes, organized and shared"] }
+    ],
+    steps: {
+      low:  "Write down your three most common workflows step by step. A documented process is the easiest thing to hand to AI or automate.",
+      high: "Choose one documented workflow and pilot an AI assistant or automation on it for 30 days. Measure the time saved before expanding."
+    }
+  },
+  {
+    id: "tools",
+    name: "Tools & Technology",
+    desc: "Many AI features are now built into tools you may already pay for.",
+    questions: [
+      { q: "Which best describes your software today?",
+        options: ["Mostly paper or desktop programs", "Basic email and office tools", "Cloud apps (Google Workspace or Microsoft 365, cloud accounting)", "Cloud apps that are integrated with each other"] },
+      { q: "Is anyone on the team already using AI tools (ChatGPT, Claude, Copilot, Gemini)?",
+        options: ["No", "Some people, on their own", "A few approved tools", "Company accounts used in daily work"] },
+      { q: "Who looks after your technology?",
+        options: ["Nobody in particular", "The owner, in spare time", "An outside IT provider", "A dedicated person or team"] }
+    ],
+    steps: {
+      low:  "Get the basics into the cloud: business email, shared documents and cloud accounting. Most new AI features arrive inside these tools first.",
+      high: "Move from personal AI accounts to business plans with admin controls, and switch on the AI features already included in tools you pay for."
+    }
+  },
+  {
+    id: "people",
+    name: "People & Skills",
+    desc: "Adoption is about people more than software.",
+    questions: [
+      { q: "How comfortable is your team with trying new software?",
+        options: ["Resistant", "Hesitant", "Open to it", "Eager"] },
+      { q: "Has anyone on the team had AI training?",
+        options: ["No", "Self-taught, informally", "One or two people", "Most of the team"] },
+      { q: "Is there someone who could champion AI internally?",
+        options: ["No", "Maybe, but no time", "Yes, informally", "Yes, with time set aside"] }
+    ],
+    steps: {
+      low:  "Run a one-hour, hands-on session where everyone tries an AI assistant on a real task from their own job. Familiarity removes most of the fear.",
+      high: "Name an AI champion, give them a few hours a month, and have them share one quick win at each team meeting."
+    }
+  },
+  {
+    id: "governance",
+    name: "Governance & Risk",
+    desc: "Using AI safely protects your customers and your reputation.",
+    questions: [
+      { q: "Do you have rules about what information can be put into AI tools?",
+        options: ["No", "Informal, unwritten", "Written guidance", "A written policy plus training"] },
+      { q: "How do you protect customer and business data today?",
+        options: ["Not much", "Passwords and antivirus", "Two-factor login and regular backups", "Formal security practices or compliance"] },
+      { q: "If AI gave a customer a wrong answer, would someone catch it?",
+        options: ["Not sure", "Probably not", "Usually", "Yes, we have a review step"] }
+    ],
+    steps: {
+      low:  "Write a one-page AI use policy: which tools are approved, what information never goes in, and who checks AI output before customers see it. (A free AI Policy Generator is coming soon.)",
+      high: "Build AI into your security routine: an approved-tools list, two-factor login everywhere, and a human review before AI output reaches customers."
+    }
+  }
+];
+
+// Overall readiness levels, by total score out of 100
+const LEVELS = [
+  { min: 0,  name: "Explorer",     desc: "You're at the starting line, which is where most small businesses are. A few foundations will make AI far more useful when you're ready." },
+  { min: 40, name: "Experimenter", desc: "You have some pieces in place. Focused pilots on one or two problems will show what AI can do for you." },
+  { min: 60, name: "Builder",      desc: "You're well positioned. The next gains come from connecting systems and making AI part of everyday work." },
+  { min: 80, name: "Leader",       desc: "You're ahead of most small businesses. Focus on scaling what works and keeping it safe." }
+];
+</script>
+
+<!-- ============================================================
+     LOGIC — how the quiz moves and how the score is calculated.
+     ============================================================ -->
+<script>
+let currentStep = 0;               // which area we're on (0–5)
+const answers = {};                // e.g. { "strategy-0": 2, ... }
+
+// Fill the intro screen with the list of areas
+document.getElementById("area-list").innerHTML =
+  AREAS.map(a => `<li>${a.name}</li>`).join("");
+
+function show(screenId) {
+  ["intro", "quiz", "results"].forEach(id =>
+    document.getElementById(id).classList.toggle("hidden", id !== screenId));
+  window.scrollTo(0, 0);
+}
+
+function startQuiz() {
+  currentStep = 0;
+  renderStep();
+  show("quiz");
+}
+
+// Draw the questions for the current area
+function renderStep() {
+  const area = AREAS[currentStep];
+  document.getElementById("step-label").textContent = `Area ${currentStep + 1} of ${AREAS.length}`;
+  document.getElementById("area-title").textContent = area.name;
+  document.getElementById("area-desc").textContent = area.desc;
+  document.getElementById("progress-fill").style.width = `${(currentStep / AREAS.length) * 100}%`;
+  document.getElementById("next-btn").textContent =
+    currentStep === AREAS.length - 1 ? "See my results" : "Next";
+
+  document.getElementById("questions").innerHTML = area.questions.map((item, qi) => {
+    const key = `${area.id}-${qi}`;
+    const opts = item.options.map((label, points) => {
+      const checked = answers[key] === points;
+      return `
+        <label class="option ${checked ? "selected" : ""}">
+          <input type="radio" name="${key}" value="${points}" ${checked ? "checked" : ""}
+                 onchange="choose('${key}', ${points}, this)">
+          <span>${label}</span>
+        </label>`;
+    }).join("");
+    return `<fieldset class="question"><legend>${qi + 1}. ${item.q}</legend>${opts}</fieldset>`;
+  }).join("");
+
+  updateNextButton();
+}
+
+// Save an answer and highlight the chosen option
+function choose(key, points, input) {
+  answers[key] = points;
+  input.closest("fieldset").querySelectorAll(".option")
+    .forEach(el => el.classList.toggle("selected", el.contains(input)));
+  updateNextButton();
+}
+
+// "Next" only works once every question in this area is answered
+function updateNextButton() {
+  const area = AREAS[currentStep];
+  const done = area.questions.every((_, qi) => answers[`${area.id}-${qi}`] !== undefined);
+  document.getElementById("next-btn").disabled = !done;
+}
+
+function nextStep() {
+  if (currentStep < AREAS.length - 1) {
+    currentStep++;
+    renderStep();
+    window.scrollTo(0, 0);
+  } else {
+    showResults();
+  }
+}
+
+function prevStep() {
+  if (currentStep === 0) { show("intro"); return; }
+  currentStep--;
+  renderStep();
+}
+
+function restart() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  show("intro");
+}
+
+// Turn a 0–100 score into a color
+function colorFor(pct) {
+  return pct >= 67 ? "var(--good)" : pct >= 40 ? "var(--mid)" : "var(--low)";
+}
+
+// Draw the spider (radar) chart: one spoke per area, 0 in the center, 100 at the edge
+function drawRadar(scored) {
+  const R = 100;                                  // radius of the outer ring
+  const n = scored.length;
+  // Position of a point at a given % along spoke i (spoke 0 points straight up)
+  const point = (i, pct) => {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    return [Math.cos(angle) * R * pct / 100, Math.sin(angle) * R * pct / 100];
+  };
+  const polygon = pct => scored.map((_, i) => point(i, pct).join(",")).join(" ");
+
+  let svg = "";
+  // Background rings at 25, 50, 75, 100
+  [25, 50, 75, 100].forEach(level => {
+    svg += `<polygon class="grid" points="${polygon(level)}"/>`;
+    svg += `<text class="ring-label" x="4" y="${-R * level / 100 + 3}">${level}</text>`;
+  });
+  // Spokes
+  scored.forEach((_, i) => {
+    const [x, y] = point(i, 100);
+    svg += `<line class="axis" x1="0" y1="0" x2="${x}" y2="${y}"/>`;
+  });
+  // The business's shape
+  svg += `<polygon class="shape" points="${scored.map((s, i) => point(i, s.pct).join(",")).join(" ")}"/>`;
+  // Dots and labels
+  scored.forEach((s, i) => {
+    const [x, y] = point(i, s.pct);
+    svg += `<circle cx="${x}" cy="${y}" r="4.5" fill="${colorFor(s.pct)}" stroke="var(--card)" stroke-width="1.5"/>`;
+    const [lx, ly] = point(i, 120);
+    const anchor = Math.abs(lx) < 5 ? "middle" : lx > 0 ? "start" : "end";
+    const dy = ly < -50 ? -16 : ly > 50 ? 10 : -4;   // nudge top labels up, bottom labels down
+    const short = s.area.name.split(" ")[0];        // "Strategy & Leadership" -> "Strategy"
+    svg += `<text text-anchor="${anchor}" x="${lx}" y="${ly + dy}">
+              <tspan class="label" x="${lx}">${short}</tspan>
+              <tspan class="value" x="${lx}" dy="17" fill="${colorFor(s.pct)}">${s.pct}</tspan>
+            </text>`;
+  });
+  document.getElementById("radar").innerHTML = svg;
+}
+
+// Calculate scores and build the results screen
+function showResults() {
+  // Score each area as a percentage of its maximum points
+  const scored = AREAS.map(area => {
+    const max = area.questions.length * 3;
+    const got = area.questions.reduce((sum, _, qi) => sum + answers[`${area.id}-${qi}`], 0);
+    return { area, pct: Math.round((got / max) * 100) };
+  });
+
+  // Overall score = average of the six areas
+  const total = Math.round(scored.reduce((s, x) => s + x.pct, 0) / scored.length);
+  const level = [...LEVELS].reverse().find(l => total >= l.min);
+
+  document.getElementById("level-name").textContent = level.name;
+  document.getElementById("level-desc").textContent = level.desc;
+  document.getElementById("ring-text").textContent = total;
+  const ring = document.getElementById("ring-fill");
+  ring.style.stroke = colorFor(total);
+  ring.style.strokeDashoffset = 326.7;
+  setTimeout(() => { ring.style.strokeDashoffset = 326.7 * (1 - total / 100); }, 50);
+
+  drawRadar(scored);
+
+  // Top 3 next steps = the three lowest-scoring areas
+  const weakest = [...scored].sort((a, b) => a.pct - b.pct).slice(0, 3);
+  document.getElementById("steps").innerHTML = weakest.map((s, i) => `
+    <div class="step">
+      <h3>${i + 1}. ${s.area.name}</h3>
+      <p>${s.pct < 50 ? s.area.steps.low : s.area.steps.high}</p>
+    </div>`).join("");
+
+  show("results");
+}
+</script>
+</body>
+</html>
